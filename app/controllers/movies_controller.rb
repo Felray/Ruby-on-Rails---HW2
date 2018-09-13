@@ -1,7 +1,32 @@
 # This file is app/controllers/movies_controller.rb
 class MoviesController < ApplicationController
+
   def index
-    @movies = Movie.all
+    #@movies = Movie.all
+
+    @ratings_filter = (session[:ratings].keys if session.key?(:ratings)) || @all_ratings
+    @movies = Movie.order(params[:sort]).where(rating: @ratings_filter)
+
+    @all_ratings = Movie.all_ratings.sort
+
+    if params.has_key?(:ratings)
+      session[:ratings] = params[:ratings]
+    elsif session.has_key?(:ratings)
+      params[:ratings] = session[:ratings]
+      flash.keep
+      redirect_to movies_path(params.permit!) and return
+    end
+
+    if params[:sort] == 'title'
+      session[:sort] = params[:sort]
+    elsif params[:sort] == 'release_date'
+      session[:sort] = params[:sort]
+    elsif session.key?(:sort)
+      params[:sort] = session[:sort]
+      flash.keep
+      redirect_to movies_path(params.permit(:sort, :ratings)) and return
+    end
+    
   end
 
   def show
